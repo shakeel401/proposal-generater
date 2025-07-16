@@ -3,10 +3,10 @@ import openai
 import os
 import json
 from dotenv import load_dotenv
-
-# Load API Key
+from openai import OpenAI
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Create client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 USER_DATA_FILE = "user_data.json"
 
@@ -119,11 +119,11 @@ PROPOSAL:
 """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
-        content = response['choices'][0]['message']['content']
+        content = response.choices[0].message.content
         feedback, proposal = "", ""
 
         if "FEEDBACK:" in content and "PROPOSAL:" in content:
