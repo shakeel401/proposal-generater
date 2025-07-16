@@ -1,11 +1,11 @@
 import streamlit as st
-import openai
 import os
 import json
 from dotenv import load_dotenv
 from openai import OpenAI
+
+# Load API Key
 load_dotenv()
-# Create client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 USER_DATA_FILE = "user_data.json"
@@ -19,47 +19,41 @@ def load_user_data():
         with open(USER_DATA_FILE, 'r') as f:
             return json.load(f)
     return {
-        "past_projects": "", "tech_tools": "", "name": "", "title": "",
-        "job_success": "", "hourly_rate": "", "location": "", 
-        "summary": "", "portfolio_links": ""
+        "past_projects": "", "tech_tools": "", "name": "Muhammad Shakeel",
+        "title": "AI Chatbot Developer | GPT-4, LangChain, RAG | FastAPI Expert",
+        "job_success": "100%", "hourly_rate": "$10/hr", "location": "Burewala, Pakistan",
+        "summary": "🚀 Need a custom GPT chatbot or AI assistant that answers from your own data or automates tasks?\nI build fast, scalable bots using GPT-4, LangChain, and FastAPI — tailored to your exact needs.\n\n💼 Recently, I built an AI chatbot for a U.S. real estate firm that qualifies leads, gathers project details, and emails chat summaries — powered by OpenAI Assistants API and deployed on Hugging Face + Vercel.\n\n⭐ With real-world client reviews, I deliver production-ready chatbots for SaaS, e-commerce, education, and legal platforms.",
+        "portfolio_links": "https://revitalize-frontend.vercel.app/\nhttps://aimlwithshakeel.site"
     }
 
-# Save user data
 def save_user_data(data):
     with open(USER_DATA_FILE, 'w') as f:
         json.dump(data, f)
 
-# Load existing
 user_data = load_user_data()
 
-st.markdown("### 👤 Your Upwork Profile Info (optional but recommended)")
+# UI Inputs
+st.markdown("### 👤 Your Upwork Profile Info")
 
-name = st.text_input("Your Name", value=user_data.get("name", "Muhammad Shakeel"))
-title = st.text_input("Your Title", value=user_data.get("title", "AI Chatbot Developer | GPT-4, LangChain, RAG | FastAPI Expert"))
-job_success = st.text_input("Job Success Score", value=user_data.get("job_success", "100%"))
-hourly_rate = st.text_input("Your Rate", value=user_data.get("hourly_rate", "$10/hr"))
-location = st.text_input("Location", value=user_data.get("location", "Burewala, Pakistan"))
-summary = st.text_area("🔎 Summary / About You", value=user_data.get("summary", """🚀 Need a custom GPT chatbot or AI assistant that answers from your own data or automates tasks?
-I build fast, scalable bots using GPT-4, LangChain, and FastAPI — tailored to your exact needs.
-
-💼 Recently, I built an AI chatbot for a U.S. real estate firm that qualifies leads, gathers project details, and emails chat summaries — powered by OpenAI Assistants API and deployed on Hugging Face + Vercel.
-
-⭐ With real-world client reviews, I deliver production-ready chatbots for SaaS, e-commerce, education, and legal platforms."""),
-height=160)
-
-portfolio_links = st.text_area("📎 Portfolio Links (1 per line)", value=user_data.get("portfolio_links", """https://revitalize-frontend.vercel.app/
-https://aimlwithshakeel.site"""), height=100)
+name = st.text_input("Your Name", value=user_data["name"])
+title = st.text_input("Your Title", value=user_data["title"])
+job_success = st.text_input("Job Success Score", value=user_data["job_success"])
+hourly_rate = st.text_input("Your Rate", value=user_data["hourly_rate"])
+location = st.text_input("Location", value=user_data["location"])
+summary = st.text_area("🔎 Summary / About You", value=user_data["summary"], height=160)
+portfolio_links = st.text_area("📎 Portfolio Links (1 per line)", value=user_data["portfolio_links"], height=100)
 
 st.markdown("---")
 
-# Proposal inputs
 job_title = st.text_input("📌 Job Title")
 job_description = st.text_area("📝 Full Job Description", height=200)
 your_plan = st.text_area("🧠 Your Plan to Complete the Job", height=150)
-past_projects = st.text_area("📁 Paste 3–5 Past Projects", value=user_data.get("past_projects", ""), height=180)
-tech_tools = st.text_input("🛠️ Tools/Stack You’ll Use", value=user_data.get("tech_tools", ""))
+past_projects = st.text_area("📁 Paste 3–5 Past Projects", value=user_data["past_projects"], height=180)
+tech_tools = st.text_input("🛠️ Tools/Stack You’ll Use", value=user_data["tech_tools"])
 delivery_time = st.text_input("⏳ Delivery Estimate (e.g., 5 days)")
 tone = st.selectbox("✒️ Proposal Style", ["Friendly", "Expert", "Fast Delivery"])
+word_limit = st.slider("📝 Proposal Length (words)", min_value=100, max_value=500, value=200, step=50)
+model_choice = st.selectbox("🧠 Choose Model", ["gpt-4", "gpt-4o", "gpt-4o-mini"])
 save_data = st.checkbox("💾 Save Data for Next Time", value=True)
 
 if "proposal_text" not in st.session_state:
@@ -67,6 +61,7 @@ if "proposal_text" not in st.session_state:
 if "feedback_text" not in st.session_state:
     st.session_state.feedback_text = ""
 
+# Proposal generator
 def generate_proposal():
     profile_block = f"""
 Upwork Profile:
@@ -81,22 +76,22 @@ Portfolio:
 """
 
     prompt = f"""
-You're an Upwork proposal expert.
+You're an expert Upwork proposal writer.
 
 Instructions:
-- Use <200 words
-- Use job post keywords
-- Refer to relevant project
-- Offer brief plan + 1 suggestion
-- Ask 1 question
-- Sound natural, not robotic
+- Start with a 2-line strong hook to grab attention
+- Write a full proposal using less than {word_limit} words
+- Use keywords from the job post
+- Reference 1–2 relevant projects
+- Offer a clear plan and one suggestion
+- End with one question for the client
 - Use tone: {tone}
 
 === JOB POST ===
 Title: {job_title}
 Description: {job_description}
 
-=== FREELANCER PLAN ===
+=== PLAN ===
 {your_plan}
 
 === PAST PROJECTS ===
@@ -111,29 +106,25 @@ Description: {job_description}
 === FREELANCER PROFILE ===
 {profile_block}
 
-Output:
+Output Format:
 FEEDBACK:
-[your thoughts on the freelancer plan]
+[short review of freelancer plan]
+
 PROPOSAL:
-[your winning proposal]
+[the generated proposal]
 """
 
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=model_choice,
             messages=[{"role": "user", "content": prompt}]
         )
-
         content = response.choices[0].message.content
-        feedback, proposal = "", ""
-
         if "FEEDBACK:" in content and "PROPOSAL:" in content:
             feedback = content.split("FEEDBACK:")[1].split("PROPOSAL:")[0].strip()
             proposal = content.split("PROPOSAL:")[1].strip()
         else:
+            feedback = ""
             proposal = content
 
         st.session_state.proposal_text = proposal
@@ -147,7 +138,7 @@ PROPOSAL:
 col1, col2 = st.columns(2)
 with col1:
     if st.button("✍️ Generate Proposal"):
-        if all([job_title, job_description, your_plan]):
+        if job_title and job_description and your_plan:
             if save_data:
                 save_user_data({
                     "past_projects": past_projects,
@@ -160,7 +151,6 @@ with col1:
             generate_proposal()
         else:
             st.warning("⚠️ Fill in all required fields.")
-
 with col2:
     if st.button("🔁 Regenerate Proposal"):
         generate_proposal()
@@ -178,7 +168,7 @@ if st.session_state.proposal_text:
         <button onclick="navigator.clipboard.writeText(document.querySelector('textarea#proposal_box').value)"
         style="background-color:#4CAF50;color:white;padding:10px;border:none;border-radius:5px;cursor:pointer;margin-top:10px;">
         📋 Copy to Clipboard</button>
-        """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
     st.download_button(
         label="📤 Export Proposal to TXT",
